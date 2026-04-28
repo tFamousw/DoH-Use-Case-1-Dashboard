@@ -1077,7 +1077,7 @@ with col_s1:
     st.markdown('<p class="section-header">ภาพรวมพอร์ตโฟลิโอโครงการ (มูลค่าสัญญา)</p>', unsafe_allow_html=True)
     tree_df = filtered[
         ["ประเภทโครงการ","จังหวัด","ชื่อสายทาง",
-         "ค่างานตามสัญญา (บาท)","ส่วนต่าง (%)","จริง (%)"]
+         "ค่างานตามสัญญา (บาท)","ตามแผน (%)","ส่วนต่าง (%)","จริง (%)"]
     ].copy()
     tree_df = tree_df[
         tree_df["ค่างานตามสัญญา (บาท)"].notna() &
@@ -1086,42 +1086,97 @@ with col_s1:
     ].copy()
     tree_df["val_mb"] = (tree_df["ค่างานตามสัญญา (บาท)"] / 1e6).round(1)
 
-    fig_tree = px.treemap(
-        tree_df,
-        path=["ประเภทโครงการ", "จังหวัด", "ชื่อสายทาง"],
-        values="ค่างานตามสัญญา (บาท)",
-        color="ส่วนต่าง (%)",
-        color_continuous_scale=[
-            [0.0, "#dc2626"],
-            [0.35, "#f59e0b"],
-            [0.55, "#facc15"],
-            [1.0, "#16a34a"],
-        ],
-        color_continuous_midpoint=0,
-        range_color=[-15, 5],
-        custom_data=["จริง (%)","ส่วนต่าง (%)","val_mb"],
-    )
-    fig_tree.update_traces(
+    # ── 3-level treemap with maxdepth=2: all data kept, only 2 levels rendered ───
+    # maxdepth=2 means the browser draws ~20-30 tiles at a time instead of
+    # hundreds. Clicking a project type reveals provinces+routes for that branch.
+
+    # Route nodes (leaves)
+    lf = tree_df.copy()
+    lf["_id"]  = (lf["ประเภทโครงการ"].astype(str) + "||" +
+                  lf["จังหวัด"].astype(str) + "||" +
+                  lf.index.astype(str))
+    lf["_par"] = lf["ประเภทโครงการ"].astype(str) + "||" + lf["จังหวัด"].astype(str)
+    _d    = lf["ส่วนต่าง (%)"].fillna(0)
+    _a    = lf["จริง (%)"].fillna(0)
+    _pl   = lf["ตามแผน (%)"].fillna(0)
+    _mb   = (lf["ค่างานตามสัญญา (บาท)"] / 1e6).round(1)
+    _dr   = _d.round(1)
+    _icon = pd.Series("🟢", index=lf.index)
+    _icon = _icon.where(_d >= 0,   "🟡")
+    _icon = _icon.where(_d >= -5,  "🟠")
+    _icon = _icon.where(_d >= -10, "🔴")
+    _sign = pd.Series("+", index=lf.index).where(_dr >= 0, "")
+    lf["_txt"] = (lf["ชื่อสายทาง"] + "<br>" +
+                  "💰 " + _mb.astype(str) + " ล้าน<br>" +
+                  "📋 " + _pl.round(1).astype(str) + "%" +
+                  "  📊 " + _a.round(1).astype(str) + "%<br>" +
+                  _icon + " " + (_sign + _dr.astype(str)) + "%")
+    lf["_val"] = lf["ค่างานตามสัญญา (บาท)"]
+    lf["_c0"]  = _d;  lf["_c1"] = _a;  lf["_c2"] = _mb;  lf["_c3"] = _pl
+    lf["_lbl"] = lf["ชื่อสายทาง"]
+
+    # Province nodes
+    pv = (lf.groupby(["ประเภทโครงการ","จังหวัด"], sort=False)
+            .agg(_c0=("_c0","mean"), _c1=("_c1","mean"),
+                 _c2=("_c2","sum"),  _c3=("_c3","mean"))
+            .reset_index())
+    pv["_id"]  = pv["ประเภทโครงการ"].astype(str) + "||" + pv["จังหวัด"].astype(str)
+    pv["_par"] = pv["ประเภทโครงการ"].astype(str)
+    pv["_lbl"] = pv["จังหวัด"].astype(str)
+    pv["_txt"] = pv["จังหวัด"].astype(str)   # overview: name only
+    pv["_val"] = 0.0
+
+    # Project type nodes
+    pt = (lf.groupby("ประเภทโครงการ", sort=False)
+            .agg(_c0=("_c0","mean"), _c1=("_c1","mean"),
+                 _c2=("_c2","sum"),  _c3=("_c3","mean"))
+            .reset_index())
+    pt["_id"]  = pt["ประเภทโครงการ"].astype(str)
+    pt["_par"] = ""
+    pt["_lbl"] = pt["ประเภทโครงการ"].astype(str)
+    pt["_txt"] = pt["ประเภทโครงการ"].astype(str)
+    pt["_val"] = 0.0
+
+    _cols = ["_id","_lbl","_par","_val","_c0","_c1","_c2","_c3","_txt"]
+    nodes = pd.concat([pt[_cols], pv[_cols], lf[_cols]], ignore_index=True)
+
+    fig_tree = go.Figure(go.Treemap(
+        ids          = nodes["_id"].tolist(),
+        labels       = nodes["_lbl"].tolist(),
+        parents      = nodes["_par"].tolist(),
+        values       = nodes["_val"].tolist(),
+        branchvalues = "remainder",
+        maxdepth     = 2,
+        text         = nodes["_txt"].tolist(),
+        textinfo     = "text",
+        customdata   = nodes[["_c0","_c1","_c2","_c3"]].values.tolist(),
         hovertemplate=(
-            "<b>%{label}</b><br>"
+            "<b>%{label}</b><br>──────────────────<br>"
             "มูลค่า   : %{customdata[2]:,.1f} ล้านบาท<br>"
-            "จริง     : %{customdata[0]:.1f}%<br>"
-            "ส่วนต่าง : %{customdata[1]:+.1f}%"
+            "แผน      : %{customdata[3]:.1f}%<br>"
+            "จริง     : %{customdata[1]:.1f}%<br>"
+            "ส่วนต่าง : %{customdata[0]:+.1f}%"
             "<extra></extra>"
         ),
-        textinfo="label",
-        marker=dict(line=dict(width=2, color="white")),
-        textfont=dict(family="Sarabun", size=11),
-    )
-    fig_tree.update_layout(
-        height=650,
-        margin=dict(l=0, r=0, t=0, b=0),
-        coloraxis_colorbar=dict(
-            title="ส่วนต่าง<br>(%)",
-            ticksuffix="%",
-            thickness=12,
-            len=0.7,
+        marker=dict(
+            colors    = nodes["_c0"].tolist(),
+            colorscale=[
+                [0.0,  "#dc2626"],
+                [0.35, "#f59e0b"],
+                [0.55, "#facc15"],
+                [1.0,  "#16a34a"],
+            ],
+            cmin=-15, cmax=5,
+            line=dict(width=2, color="white"),
+            colorbar=dict(title="ส่วนต่าง<br>(%)", ticksuffix="%",
+                          thickness=12, len=0.7),
         ),
+        textfont     = dict(family="Sarabun", size=13),
+        textposition = "middle center",
+    ))
+    fig_tree.update_layout(
+        height=500,
+        margin=dict(l=0, r=0, t=0, b=0),
         font=dict(family="Sarabun"),
     )
     st.plotly_chart(fig_tree, use_container_width=True)
