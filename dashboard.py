@@ -395,7 +395,7 @@ with st.sidebar:
                      text-transform:uppercase;letter-spacing:1px">ปีงบประมาณ</span>
     </div>""", unsafe_allow_html=True)
     years     = sorted(df_all["ปีงบประมาณ"].unique())
-    sel_years = st.multiselect("ปีงบประมาณ", years, default=years,
+    sel_years = st.multiselect("ปีงบประมาณ", years, default=[2569] if 2569 in years else years,
                                label_visibility="collapsed")
 
     # ── Province filter ───────────────────────────────────────────────────────
@@ -444,7 +444,8 @@ with st.sidebar:
     if sel_unit:  _sb = _sb[_sb["หน่วยงานรับผิดชอบ"].isin(sel_unit)]
     if risk_only: _sb = _sb[_sb["ส่วนต่าง (%)"] < -5]
     _sb_n     = len(_sb)
-    _sb_total = len(latest)
+    _sb_base  = latest[latest["ปีงบประมาณ"].isin(sel_years)] if sel_years else latest
+    _sb_total = len(_sb_base)
     _bar_w    = max(4, int((_sb_n / _sb_total * 100) if _sb_total else 0))
     _bar_c    = "#22c55e" if _bar_w > 60 else "#f59e0b" if _bar_w > 30 else "#ef4444"
 
@@ -1175,7 +1176,7 @@ with col_s1:
         textposition = "middle center",
     ))
     fig_tree.update_layout(
-        height=500,
+        height=700,
         margin=dict(l=0, r=0, t=0, b=0),
         font=dict(family="Sarabun"),
     )
@@ -1283,5 +1284,3 @@ with pc_right:
         st.session_state.table_page += 1
         st.rerun()
 
-csv = table_df.to_csv(index=False, encoding="utf-8-sig")
-st.download_button("ดาวน์โหลด CSV", csv, "รายงาน.csv", "text/csv")
