@@ -252,6 +252,44 @@ PROVINCE_COORDS = {
     "ราชบุรี, เพชรบุรี":(13.5282,99.8134),
 }
 
+# English → Thai province name mapping (matches apisit/thailand.json GeoJSON)
+EN_TH = {
+    "Mae Hong Son":"แม่ฮ่องสอน","Chumphon":"ชุมพร",
+    "Nakhon Si Thammarat":"นครศรีธรรมราช","Phuket":"ภูเก็ต",
+    "Phangnga":"พังงา","Ranong":"ระนอง","Surat Thani":"สุราษฎร์ธานี",
+    "Krabi":"กระบี่","Phatthalung":"พัทลุง","Satun":"สตูล",
+    "Songkhla":"สงขลา","Trang":"ตรัง","Yala":"ยะลา",
+    "Chiang Rai":"เชียงราย","Chiang Mai":"เชียงใหม่",
+    "Lampang":"ลำปาง","Lamphun":"ลำพูน","Nan":"น่าน",
+    "Phayao":"พะเยา","Phrae":"แพร่","Phitsanulok":"พิษณุโลก",
+    "Sukhothai":"สุโขทัย","Uttaradit":"อุตรดิตถ์",
+    "Kanchanaburi":"กาญจนบุรี","Kamphaeng Phet":"กำแพงเพชร",
+    "Phichit":"พิจิตร","Phetchabun":"เพชรบูรณ์",
+    "Suphan Buri":"สุพรรณบุรี","Tak":"ตาก","Uthai Thani":"อุทัยธานี",
+    "Ang Thong":"อ่างทอง","Chai Nat":"ชัยนาท","Lop Buri":"ลพบุรี",
+    "Nakhon Nayok":"นครนายก","Prachin Buri":"ปราจีนบุรี",
+    "Nakhon Sawan":"นครสวรรค์",
+    "Phra Nakhon Si Ayutthaya":"พระนครศรีอยุธยา",
+    "Pathum Thani":"ปทุมธานี","Sing Buri":"สิงห์บุรี",
+    "Saraburi":"สระบุรี","Bangkok Metropolis":"กรุงเทพมหานคร",
+    "Nonthaburi":"นนทบุรี","Nakhon Pathom":"นครปฐม",
+    "Phetchaburi":"เพชรบุรี","Prachuap Khiri Khan":"ประจวบคีรีขันธ์",
+    "Ratchaburi":"ราชบุรี","Samut Prakan":"สมุทรปราการ",
+    "Samut Sakhon":"สมุทรสาคร","Samut Songkhram":"สมุทรสงคราม",
+    "Si Sa Ket":"ศรีสะเกษ","Ubon Ratchathani":"อุบลราชธานี",
+    "Amnat Charoen":"อำนาจเจริญ","Yasothon":"ยโสธร",
+    "Chon Buri":"ชลบุรี","Chachoengsao":"ฉะเชิงเทรา",
+    "Chanthaburi":"จันทบุรี","Sa Kaeo":"สระแก้ว","Rayong":"ระยอง",
+    "Trat":"ตราด","Buri Ram":"บุรีรัมย์","Chaiyaphum":"ชัยภูมิ",
+    "Khon Kaen":"ขอนแก่น","Kalasin":"กาฬสินธุ์",
+    "Maha Sarakham":"มหาสารคาม","Nakhon Ratchasima":"นครราชสีมา",
+    "Roi Et":"ร้อยเอ็ด","Surin":"สุรินทร์","Loei":"เลย",
+    "Nong Khai":"หนองคาย","Sakon Nakhon":"สกลนคร",
+    "Udon Thani":"อุดรธานี","Nong Bua Lam Phu":"หนองบัวลำภู",
+    "Nakhon Phanom":"นครพนม","Mukdahan":"มุกดาหาร",
+    "Narathiwat":"นราธิวาส","Pattani":"ปัตตานี","Bueng Kan":"บึงกาฬ",
+}
+
 # ── Load Data ─────────────────────────────────────────────────────────────────
 @st.cache_data
 def load_data():
@@ -298,6 +336,17 @@ def load_data():
         return "ล่าช้าวิกฤต"
     df["สถานะ"] = df["ส่วนต่าง (%)"].apply(status_tag)
     return df
+
+@st.cache_data(show_spinner=False)
+def load_thailand_geojson():
+    import urllib.request, json as _json
+    url = "https://raw.githubusercontent.com/apisit/thailand.json/master/thailand.json"
+    with urllib.request.urlopen(url, timeout=15) as r:
+        geo = _json.loads(r.read())
+    for feat in geo["features"]:
+        en = feat["properties"].get("name", "")
+        feat["properties"]["name_th"] = EN_TH.get(en, en)
+    return geo
 
 def format_thai_baht(value):
     if value >= 1_000_000_000_000:
@@ -365,7 +414,8 @@ def progress_ring_card(title, pct, subtitle, ring_color, border_color):
     </div>
     """
 
-df_all = load_data()
+df_all   = load_data()
+thai_geo = load_thailand_geojson()
 latest = (df_all.sort_values(["ปีงบประมาณ","เดือน"])
                 .groupby("ชื่อสายทาง", sort=False).last().reset_index())
 
@@ -519,6 +569,7 @@ avg_plan   = filtered["ตามแผน (%)"].mean()
 variance   = avg_actual - avg_plan
 risk_count = (filtered["ส่วนต่าง (%)"] < -5).sum()
 done_count = (filtered["จริง (%)"] >= 100).sum()
+prov_count = filtered["จังหวัด"].nunique()
 
 # ── Header ────────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -569,7 +620,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ── KPI Cards ─────────────────────────────────────────────────────────────────
-k1, k2, k3, k4, k5 = st.columns(5)
+k1, k2, k3, k4, k5, k6 = st.columns(6)
 
 var_color = "#16a34a" if variance >= 0 else "#dc2626"
 var_bg    = "#dcfce7" if variance >= 0 else "#fee2e2"
@@ -601,6 +652,10 @@ with k4:
 with k5:
     st.markdown(kpi_card("แล้วเสร็จ 100%", f"{done_count:,} โครงการ",
                          border_color="#16a34a", icon="✅"),
+                unsafe_allow_html=True)
+with k6:
+    st.markdown(kpi_card("จังหวัดที่มีโครงการ", f"{prov_count:,} จังหวัด",
+                         border_color="#7c3aed", icon="📍"),
                 unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
@@ -636,109 +691,225 @@ def dot_label(v):
 map_df["dot_color"]  = map_df["avg_var"].apply(dot_color)
 map_df["dot_status"] = map_df["avg_var"].apply(dot_label)
 
-MAP_STYLES = {
-    "🗺️ มาตรฐาน": "carto-positron",
-    "🌙 โหมดมืด": "carto-darkmatter",
-    "🛣️ ถนน":     "open-street-map",
-}
-_map_style_label = st.radio(
-    "รูปแบบแผนที่",
-    list(MAP_STYLES.keys()),
-    horizontal=True,
-    index=0,
-    key="map_style_selector",
-)
-_selected_style = MAP_STYLES[_map_style_label]
+_ctrl_col1, _ctrl_col2 = st.columns([1, 2])
+with _ctrl_col1:
+    MAP_TYPES = {"🗺️ ระบายสีตามจังหวัด": "heatmap", "📍 แสดงแบบจุด": "scatter"}
+    _map_type_label = st.radio(
+        "รูปแบบแสดงผล",
+        list(MAP_TYPES.keys()),
+        horizontal=True,
+        index=0,
+        key="map_type_selector",
+    )
+    _selected_type = MAP_TYPES[_map_type_label]
+with _ctrl_col2:
+    MAP_STYLES = {
+        "🗺️ มาตรฐาน": "carto-positron",
+        "🌙 โหมดมืด": "carto-darkmatter",
+        "🛣️ ถนน":     "open-street-map",
+    }
+    _map_style_label = st.radio(
+        "รูปแบบแผนที่",
+        list(MAP_STYLES.keys()),
+        horizontal=True,
+        index=0,
+        key="map_style_selector",
+    )
+    _selected_style = MAP_STYLES[_map_style_label]
 
-fig_map = go.Figure()
 STATUS_GROUPS = [
     ("ล่าช้าวิกฤต (< -10%)",        "#dc2626"),
     ("ล่าช้าปานกลาง (-5 ถึง -10%)", "#f59e0b"),
     ("ล่าช้าเล็กน้อย (0 ถึง -5%)",   "#facc15"),
     ("เป็นไปตามแผน / เร็วกว่า",      "#22c55e"),
 ]
-for label, color in STATUS_GROUPS:
-    sub = map_df[map_df["dot_status"]==label]
-    if sub.empty: continue
-    fig_map.add_trace(go.Scattermapbox(
-        lat=sub["lat"], lon=sub["lon"],
-        mode="markers",
-        marker=dict(size=12, color=color, opacity=0.85),
-        name=label,
-        customdata=sub[["avg_plan","avg_actual","avg_var","count","val_mb"]].values,
-        text=sub["จังหวัด"],
-        hovertemplate=(
-            "<b>%{text}</b><br>──────────────────<br>"
-            "ตามแผน  : %{customdata[0]:.1f}%<br>"
-            "จริง     : %{customdata[1]:.1f}%<br>"
-            "ส่วนต่าง : <b>%{customdata[2]:+.1f}%</b><br>"
-            "โครงการ : %{customdata[3]} โครงการ<br>"
-            "มูลค่า   : %{customdata[4]:,.0f} ล้านบาท<extra></extra>"
-        ),
-        selected=dict(marker=dict(size=22, opacity=1.0)),
-        unselected=dict(marker=dict(size=10, opacity=0.4)),
-    ))
+
 # Zoom + highlight driven by session state (set before the figure renders)
 _ss_prov = st.session_state.get("_map_sel_prov")
+_sp_row  = None
 if _ss_prov is not None and _ss_prov in map_df["จังหวัด"].values:
     _sp_row     = map_df[map_df["จังหวัด"] == _ss_prov].iloc[0]
     _map_center = {"lat": float(_sp_row["lat"]), "lon": float(_sp_row["lon"])}
     _map_zoom   = 7.5
-    # White halo ring behind the selected dot
-    fig_map.add_trace(go.Scattermapbox(
-        lat=[float(_sp_row["lat"])], lon=[float(_sp_row["lon"])],
-        mode="markers",
-        marker=dict(size=36, color="white", opacity=0.55),
-        hoverinfo="skip", showlegend=False,
-    ))
-    # Enlarged coloured dot on top
-    fig_map.add_trace(go.Scattermapbox(
-        lat=[float(_sp_row["lat"])], lon=[float(_sp_row["lon"])],
-        mode="markers",
-        marker=dict(size=24, color=str(_sp_row["dot_color"]), opacity=1.0),
-        text=[_ss_prov],
-        hovertemplate=(
-            "<b>%{text}</b><br>──────────────────<br>"
-            f"ตามแผนเฉลี่ย  : {_sp_row['avg_plan']:.1f}%<br>"
-            f"จริงเฉลี่ย     : {_sp_row['avg_actual']:.1f}%<br>"
-            f"ส่วนต่างเฉลี่ย : {_sp_row['avg_var']:+.1f}%<br>"
-            f"โครงการ : {int(_sp_row['count'])} โครงการ<br>"
-            f"มูลค่า   : {_sp_row['val_mb']:,.0f} ล้านบาท<extra></extra>"
-        ),
-        showlegend=False,
-    ))
 else:
     _map_center = {"lat": 13.0, "lon": 101.5}
     _map_zoom   = 4.8
 
-fig_map.update_layout(
-    mapbox=dict(style=_selected_style, zoom=_map_zoom, center=_map_center),
-    margin=dict(l=0,r=0,t=0,b=0), height=500,
-    paper_bgcolor="rgba(0,0,0,0)",
-    clickmode="event+select",
-    legend=dict(
-        title=dict(text="<b>สถานะ (จริง − แผน)</b>", font=dict(size=12)),
-        orientation="v", x=0.01, y=0.99,
-        xanchor="left", yanchor="top",
-        bgcolor="rgba(255,255,255,0.9)",
-        bordercolor="#e2e8f0", borderwidth=1,
-        font=dict(family="Sarabun", size=11),
-    ),
-    font=dict(family="Sarabun"),
-)
+fig_map = go.Figure()
+
+if _selected_type == "scatter":
+    # ── Scatter dot map ───────────────────────────────────────────────────
+    for label, color in STATUS_GROUPS:
+        sub = map_df[map_df["dot_status"]==label]
+        if sub.empty: continue
+        fig_map.add_trace(go.Scattermapbox(
+            lat=sub["lat"], lon=sub["lon"],
+            mode="markers",
+            marker=dict(size=12, color=color, opacity=0.85),
+            name=label,
+            customdata=sub[["avg_plan","avg_actual","avg_var","count","val_mb"]].values,
+            text=sub["จังหวัด"],
+            hovertemplate=(
+                "<b>%{text}</b><br>──────────────────<br>"
+                "ตามแผน  : %{customdata[0]:.1f}%<br>"
+                "จริง     : %{customdata[1]:.1f}%<br>"
+                "ส่วนต่าง : <b>%{customdata[2]:+.1f}%</b><br>"
+                "โครงการ : %{customdata[3]} โครงการ<br>"
+                "มูลค่า   : %{customdata[4]:,.0f} ล้านบาท<extra></extra>"
+            ),
+            selected=dict(marker=dict(size=22, opacity=1.0)),
+            unselected=dict(marker=dict(size=10, opacity=0.4)),
+        ))
+    if _sp_row is not None:
+        # White halo ring behind the selected dot
+        fig_map.add_trace(go.Scattermapbox(
+            lat=[float(_sp_row["lat"])], lon=[float(_sp_row["lon"])],
+            mode="markers",
+            marker=dict(size=36, color="white", opacity=0.55),
+            hoverinfo="skip", showlegend=False,
+        ))
+        # Enlarged coloured dot on top
+        fig_map.add_trace(go.Scattermapbox(
+            lat=[float(_sp_row["lat"])], lon=[float(_sp_row["lon"])],
+            mode="markers",
+            marker=dict(size=24, color=str(_sp_row["dot_color"]), opacity=1.0),
+            text=[_ss_prov],
+            hovertemplate=(
+                "<b>%{text}</b><br>──────────────────<br>"
+                f"ตามแผนเฉลี่ย  : {_sp_row['avg_plan']:.1f}%<br>"
+                f"จริงเฉลี่ย     : {_sp_row['avg_actual']:.1f}%<br>"
+                f"ส่วนต่างเฉลี่ย : {_sp_row['avg_var']:+.1f}%<br>"
+                f"โครงการ : {int(_sp_row['count'])} โครงการ<br>"
+                f"มูลค่า   : {_sp_row['val_mb']:,.0f} ล้านบาท<extra></extra>"
+            ),
+            showlegend=False,
+        ))
+    fig_map.update_layout(
+        mapbox=dict(style=_selected_style, zoom=_map_zoom, center=_map_center),
+        margin=dict(l=0,r=0,t=0,b=0), height=500,
+        paper_bgcolor="rgba(0,0,0,0)",
+        clickmode="event+select",
+        legend=dict(
+            title=dict(text="<b>สถานะ (จริง − แผน)</b>", font=dict(size=12)),
+            orientation="v", x=0.01, y=0.99,
+            xanchor="left", yanchor="top",
+            bgcolor="rgba(255,255,255,0.9)",
+            bordercolor="#e2e8f0", borderwidth=1,
+            font=dict(family="Sarabun", size=11),
+        ),
+        font=dict(family="Sarabun"),
+    )
+
+else:
+    # ── Choropleth province map ───────────────────────────────────────────
+    _CHORO_SCALE = [
+        [0.0,  "#dc2626"],
+        [0.25, "#f59e0b"],
+        [0.5,  "#facc15"],
+        [0.75, "#86efac"],
+        [1.0,  "#16a34a"],
+    ]
+    _CHORO_HOVER = (
+        "<b>%{text}</b><br>──────────────────<br>"
+        "ตามแผน  : %{customdata[0]:.1f}%<br>"
+        "จริง     : %{customdata[1]:.1f}%<br>"
+        "ส่วนต่าง : <b>%{customdata[2]:+.1f}%</b><br>"
+        "โครงการ : %{customdata[3]} โครงการ<br>"
+        "มูลค่า   : %{customdata[4]:,.0f} ล้านบาท<extra></extra>"
+    )
+    _CHORO_COLORBAR = dict(
+        title=dict(text="ส่วนต่าง<br>(%)", font=dict(size=11, family="Sarabun")),
+        ticksuffix="%", thickness=14, len=0.7,
+        tickvals=[-15, -10, -5, 0, 5],
+    )
+
+    if _sp_row is not None:
+        # Dimmed background — all provinces in neutral grey
+        fig_map.add_trace(go.Choroplethmapbox(
+            geojson=thai_geo,
+            locations=map_df["จังหวัด"],
+            z=[0] * len(map_df),
+            featureidkey="properties.name_th",
+            colorscale=[[0, "#cbd5e1"], [1, "#cbd5e1"]],
+            zmin=0, zmax=1,
+            marker_opacity=0.3,
+            marker_line_width=0.8,
+            marker_line_color="#94a3b8",
+            hoverinfo="skip",
+            showscale=False,
+            name="", showlegend=False,
+        ))
+        # Selected province only — full colour + thick border
+        _sel = map_df[map_df["จังหวัด"] == _ss_prov]
+        fig_map.add_trace(go.Choroplethmapbox(
+            geojson=thai_geo,
+            locations=_sel["จังหวัด"],
+            z=_sel["avg_var"],
+            featureidkey="properties.name_th",
+            colorscale=_CHORO_SCALE,
+            zmin=-15, zmax=5,
+            marker_opacity=0.9,
+            marker_line_width=2.5,
+            marker_line_color="white",
+            customdata=_sel[["avg_plan","avg_actual","avg_var","count","val_mb"]].values,
+            text=_sel["จังหวัด"],
+            hovertemplate=_CHORO_HOVER,
+            colorbar=_CHORO_COLORBAR,
+            name="", showlegend=False,
+        ))
+    else:
+        # No selection — show all provinces normally
+        fig_map.add_trace(go.Choroplethmapbox(
+            geojson=thai_geo,
+            locations=map_df["จังหวัด"],
+            z=map_df["avg_var"],
+            featureidkey="properties.name_th",
+            colorscale=_CHORO_SCALE,
+            zmin=-15, zmax=5,
+            marker_opacity=0.75,
+            marker_line_width=1.2,
+            marker_line_color="white",
+            customdata=map_df[["avg_plan","avg_actual","avg_var","count","val_mb"]].values,
+            text=map_df["จังหวัด"],
+            hovertemplate=_CHORO_HOVER,
+            colorbar=_CHORO_COLORBAR,
+            name="", showlegend=False,
+        ))
+
+    fig_map.update_layout(
+        mapbox=dict(style=_selected_style, zoom=_map_zoom, center=_map_center),
+        margin=dict(l=0,r=0,t=0,b=0), height=500,
+        paper_bgcolor="rgba(0,0,0,0)",
+        clickmode="event+select",
+        showlegend=False,
+        font=dict(family="Sarabun"),
+    )
+
 map_event = st.plotly_chart(
     fig_map, use_container_width=True,
     config={"scrollZoom": True},
     on_select="rerun",
     key="province_map",
 )
-st.markdown("""
+if _selected_type == "scatter":
+    st.markdown("""
 <div style="display:flex;gap:20px;flex-wrap:wrap;padding:8px 4px;font-size:12px;color:#475569;">
   <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:#dc2626;display:inline-block;"></span><b style="color:#dc2626;">ล่าช้าวิกฤต</b> &lt; −10%</span>
   <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block;"></span><b style="color:#b45309;">ล่าช้าปานกลาง</b> −5 ถึง −10%</span>
   <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:#facc15;display:inline-block;"></span><b style="color:#854d0e;">ล่าช้าเล็กน้อย</b> 0 ถึง −5%</span>
   <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block;"></span><b style="color:#166534;">ตามแผน / เร็วกว่า</b></span>
   <span style="margin-left:auto;opacity:0.6;font-style:italic">💡 คลิกที่จุดบนแผนที่เพื่อดูรายละเอียดโครงการ</span>
+</div>
+""", unsafe_allow_html=True)
+else:
+    st.markdown("""
+<div style="display:flex;gap:20px;flex-wrap:wrap;padding:8px 4px;font-size:12px;color:#475569;">
+  <span style="display:flex;align-items:center;gap:5px;">
+    <span style="width:80px;height:10px;border-radius:3px;display:inline-block;
+                 background:linear-gradient(90deg,#dc2626,#f59e0b,#facc15,#86efac,#16a34a)"></span>
+    <span><b style="color:#dc2626;">แดง</b> = ล่าช้ามาก &nbsp;→&nbsp; <b style="color:#166534;">เขียว</b> = เร็วกว่าแผน</span>
+  </span>
+  <span style="margin-left:auto;opacity:0.6;font-style:italic">💡 คลิกที่จังหวัดบนแผนที่เพื่อดูรายละเอียดโครงการ</span>
 </div>
 """, unsafe_allow_html=True)
 
@@ -749,12 +920,14 @@ if (map_event
         and map_event.selection
         and map_event.selection.points):
     pt = map_event.selection.points[0]
-    # Primary: text field holds the province name directly (set via text= in the trace)
-    _prov_from_text = pt.get("text")
-    if _prov_from_text and _prov_from_text in map_df["จังหวัด"].values:
-        selected_province = _prov_from_text
-    else:
-        # Fallback: nearest-province lookup via lat/lon
+    # Choropleth fires `location`; scatter fires `text`. Check both.
+    for _key in ("location", "text"):
+        _val = pt.get(_key)
+        if _val and _val in map_df["จังหวัด"].values:
+            selected_province = _val
+            break
+    if selected_province is None:
+        # Fallback: nearest-province lookup via lat/lon (scatter mode)
         sel_lat = pt.get("lat")
         sel_lon = pt.get("lon")
         if sel_lat is not None and sel_lon is not None:
