@@ -173,6 +173,11 @@ div[data-testid="stButton"] button:hover {
     background: rgba(219,234,254,0.9) !important;
     box-shadow: 0 2px 8px rgba(26,82,118,0.15) !important;
 }
+
+/* ── Hide Streamlit chrome ── */
+header[data-testid="stHeader"] { display: none !important; }
+#MainMenu                       { display: none !important; }
+footer                          { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
