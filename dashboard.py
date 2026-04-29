@@ -271,6 +271,7 @@ def load_data():
         "หมายเหตุ /แนวทางแก้ไข":"แนวทางแก้ไข",
     }
     df = df.rename(columns=RENAME)
+    df["ปีงบประมาณ"] = pd.to_numeric(df["ปีงบประมาณ"], errors="coerce").fillna(0).astype(int)
     for col in ["ระยะทาง (กม.)","เวลาทำงาน (วัน)"]:
         df[col] = pd.to_numeric(df[col].astype(str).str.split("\n").str[0], errors="coerce")
     for col in ["โครงการ","ชื่อสายทาง","จังหวัด","ผู้รับจ้าง","หน่วยงานรับผิดชอบ","ปัญหาอุปสรรค","แนวทางแก้ไข"]:
@@ -861,11 +862,11 @@ if selected_province:
     </style>
     """, unsafe_allow_html=True)
 
-    for _, row in prov_projects.sort_values("ส่วนต่าง (%)").iterrows():
+    for _row_idx, row in prov_projects.sort_values("ส่วนต่าง (%)").iterrows():
         v    = row["ส่วนต่าง (%)"] if not pd.isna(row["ส่วนต่าง (%)"]) else 0
         dot  = "🔴" if v < -10 else "🟠" if v < -5 else "🟡" if v < 0 else "🟢"
         stxt = "วิกฤต" if v < -10 else "ล่าช้า" if v < -5 else "ล่าช้าเล็กน้อย" if v < 0 else "ตามแผน"
-        with st.expander(f"{dot}  {row['ชื่อสายทาง']}  ·  {stxt} ({v:+.1f}%)"):
+        with st.expander(f"{dot}  {row['ชื่อสายทาง']}  ·  {stxt} ({v:+.1f}%)", key=f"prov_exp_{_row_idx}"):
             m1, m2, m3 = st.columns(3)
             m1.metric("ตามแผน (%)", f"{row['ตามแผน (%)']:.1f}%")
             m2.metric("จริง (%)",   f"{row['จริง (%)']:.1f}%")
@@ -1193,7 +1194,7 @@ with col_s2:
     if risk_df.empty:
         st.success("ไม่มีโครงการที่ล่าช้าเกิน 5% ในตัวกรองที่เลือก")
     else:
-        for rank, (_, row) in enumerate(risk_df.iterrows(), start=1):
+        for rank, (_row_idx, row) in enumerate(risk_df.iterrows(), start=1):
             v     = row["ส่วนต่าง (%)"]
             plan  = row["ตามแผน (%)"]
             actual= row["จริง (%)"]
@@ -1201,7 +1202,7 @@ with col_s2:
             icon  = "🔴" if v < -10 else "🟠"
             label = "⚠ วิกฤต" if v < -10 else "⚠ ล่าช้า"
             title = f"{icon}  #{rank}  {row['ชื่อสายทาง']}  ·  {row['จังหวัด']}  ·  {label} {v:+.1f}%"
-            with st.expander(title):
+            with st.expander(title, key=f"risk_exp_{_row_idx}"):
                 c1, c2, c3 = st.columns(3)
                 c1.metric("ตามแผน (%)", f"{plan:.1f}%"   if pd.notna(plan)   else "–")
                 c2.metric("จริง (%)",   f"{actual:.1f}%" if pd.notna(actual) else "–")
