@@ -521,6 +521,7 @@ with st.sidebar:
     </div>""", unsafe_allow_html=True)
     years     = sorted(df_all["ปีงบประมาณ"].unique())
     sel_years = st.multiselect("ปีงบประมาณ", years, default=[2569] if 2569 in years else years,
+                               placeholder="เลือกปีงบประมาณ...",
                                label_visibility="collapsed")
 
     # ── Province filter ───────────────────────────────────────────────────────
@@ -531,6 +532,7 @@ with st.sidebar:
     </div>""", unsafe_allow_html=True)
     provinces = sorted(latest["จังหวัด"].dropna().unique())
     sel_prov  = st.multiselect("จังหวัด", provinces, default=[],
+                               placeholder="เลือกจังหวัด...",
                                label_visibility="collapsed")
 
     # ── Project type filter ───────────────────────────────────────────────────
@@ -541,6 +543,7 @@ with st.sidebar:
     </div>""", unsafe_allow_html=True)
     proj_types = sorted(latest["ประเภทโครงการ"].dropna().unique())
     sel_proj   = st.multiselect("ประเภทโครงการ", proj_types, default=[],
+                                placeholder="เลือกประเภทโครงการ...",
                                 label_visibility="collapsed")
 
     # ── Unit filter ───────────────────────────────────────────────────────────
@@ -551,6 +554,7 @@ with st.sidebar:
     </div>""", unsafe_allow_html=True)
     units     = sorted(latest["หน่วยงานรับผิดชอบ"].dropna().unique())
     sel_unit  = st.multiselect("หน่วยงานรับผิดชอบ", units, default=[],
+                               placeholder="เลือกหน่วยงาน...",
                                label_visibility="collapsed")
 
     # ── Risk-only toggle ──────────────────────────────────────────────────────
