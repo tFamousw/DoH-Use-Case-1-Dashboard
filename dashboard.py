@@ -1570,31 +1570,17 @@ with tab_analysis:
     )
     _CON_NONE = "— เลือกผู้รับจ้างเพื่อดูรายละเอียด —"
 
-    # ── Search input (text persists as you type) + filtered dropdown ──────────────
-    _sc1, _sc2 = st.columns([1, 2])
-    with _sc1:
-        _con_search = st.text_input(
-            "ค้นหา",
-            placeholder="🔍  พิมพ์ชื่อผู้รับจ้าง...",
-            key="con_search_text",
-            label_visibility="collapsed",
-        )
-    with _sc2:
-        _filtered_cons = (
-            [c for c in _con_list if _con_search.strip().lower() in c.lower()]
-            if _con_search.strip() else _con_list
-        )
-        _con_options = [_CON_NONE] + _filtered_cons
-        # Reset BEFORE widget instantiation (close button or stale filter)
-        if st.session_state.pop("_con_reset", False) or \
-                st.session_state.get("contractor_select", _CON_NONE) not in _con_options:
-            st.session_state["contractor_select"] = _CON_NONE
-        sel_contractor = st.selectbox(
-            "เลือกผู้รับจ้าง",
-            _con_options,
-            key="contractor_select",
-            label_visibility="collapsed",
-        )
+    _con_options = [_CON_NONE] + _con_list
+    # Reset BEFORE widget instantiation (close button or stale filter)
+    if st.session_state.pop("_con_reset", False) or \
+            st.session_state.get("contractor_select", _CON_NONE) not in _con_options:
+        st.session_state["contractor_select"] = _CON_NONE
+    sel_contractor = st.selectbox(
+        "เลือกผู้รับจ้าง",
+        _con_options,
+        key="contractor_select",
+        label_visibility="collapsed",
+    )
 
     if sel_contractor != _CON_NONE:
         con_df   = filtered[filtered["ผู้รับจ้าง"] == sel_contractor].copy()
