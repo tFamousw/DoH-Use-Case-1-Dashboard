@@ -47,11 +47,11 @@ html, body, [class*="css"] { font-family: 'Sarabun', sans-serif !important; }
     100% { opacity: 1; transform: scale(1); }
 }
 
-/* ── Page background — dot grid ── */
+/* ── Page background — warm parchment dot grid ── */
 .stApp, [data-testid="stAppViewContainer"] {
-    background-color: #e8edf4 !important;
-    background-image: radial-gradient(#c0cfe0 1px, transparent 1px) !important;
-    background-size: 26px 26px !important;
+    background-color: #E9E5DD !important;
+    background-image: radial-gradient(rgba(130,118,100,0.30) 1px, transparent 1px) !important;
+    background-size: 24px 24px !important;
 }
 
 /* ── Dark sidebar ── */
@@ -76,13 +76,13 @@ html, body, [class*="css"] { font-family: 'Sarabun', sans-serif !important; }
 
 /* ── Section headers ── */
 .section-header {
-    font-size: 15px; font-weight: 800; color: #0f172a;
-    margin: 22px 0 16px; padding: 13px 20px;
-    border-left: 5px solid #1A5276;
-    background: linear-gradient(90deg, rgba(219,234,254,0.95) 0%, rgba(239,246,255,0.75) 45%, rgba(248,250,252,0) 100%);
-    border-radius: 0 14px 14px 0;
+    font-size: 14px; font-weight: 800; color: #0f172a;
+    margin: 20px 0 14px; padding: 11px 18px;
+    border-left: 4px solid #1A5276;
+    background: linear-gradient(90deg, rgba(26,82,118,0.08) 0%, rgba(26,82,118,0.03) 60%, transparent 100%);
+    border-radius: 0 12px 12px 0;
     letter-spacing: 0.2px;
-    box-shadow: 0 3px 12px rgba(26,82,118,0.10), inset 0 1px 0 rgba(255,255,255,0.7);
+    box-shadow: none;
 }
 
 /* ── Metric containers ── */
@@ -183,12 +183,12 @@ footer                          { display: none !important; }
 
 /* ── Plotly chart glass cards ── */
 [data-testid="stPlotlyChart"] {
-    background: rgba(255,255,255,0.82);
+    background: rgba(255,253,248,0.90);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.9);
+    border: 1px solid rgba(220,210,195,0.55);
     border-radius: 14px;
-    box-shadow: 0 8px 32px rgba(15,23,42,0.08);
+    box-shadow: 0 4px 20px rgba(100,85,65,0.09);
     overflow: hidden;
 }
 
@@ -350,30 +350,30 @@ EN_TH = {
 # ── Load Data ─────────────────────────────────────────────────────────────────
 @st.cache_data
 def load_data():
-    df = pd.read_excel("รายงานความก้าวหน้า_67-69.xlsx", header=0)
+    df = pd.read_excel("clean_รายงานความก้าวหน้า_67-69.xlsx", sheet_name="ข้อมูล", header=0)
     RENAME = {
         "ปีงบประมาณ":"ปีงบประมาณ","เดือน":"เดือน",
         "โครงการ":"โครงการ","กิจกรรม":"กิจกรรม",
-        "หมายเลข\nทางหลวง":"หมายเลขทางหลวง",
+        "หมายเลขทางหลวง":"หมายเลขทางหลวง",
         "ชื่อสายทาง":"ชื่อสายทาง","จังหวัด":"จังหวัด",
-        "เริ่มต้น - สิ้นสุด\nกม.- กม.":"ช่วง กม.",
-        "ระยะทาง\n(กม.) / (แห่ง)":"ระยะทาง (กม.)",
-        "ค่างานตามสัญญา\n(บาท)":"ค่างานตามสัญญา (บาท)",
+        "เริ่มต้น - สิ้นสุด กม.- กม.":"ช่วง กม.",
+        "ระยะทาง (กม.)":"ระยะทาง (กม.)",
+        "ค่างานตามสัญญา (บาท)":"ค่างานตามสัญญา (บาท)",
         "ก่อสร้างโดย":"ผู้รับจ้าง",
-        "หน่วยงานที่\nรับผิดชอบ":"หน่วยงานรับผิดชอบ",
-        "วันเริ่ม\nสัญญา":"วันเริ่มสัญญา",
-        "วันสิ้นสุด\nสัญญา":"วันสิ้นสุดสัญญา",
-        "เวลาทำงาน\n(วัน)":"เวลาทำงาน (วัน)",
+        "หน่วยงานที่รับผิดชอบ":"หน่วยงานรับผิดชอบ",
+        "วันเริ่มสัญญา":"วันเริ่มสัญญา",
+        "วันสิ้นสุดสัญญา":"วันสิ้นสุดสัญญา",
+        "เวลาทำงาน (วัน)":"เวลาทำงาน (วัน)",
         "สะสมแผน":"ตามแผน (%)",
         "สะสมผล":"จริง (%)",
         "ช้า-เร็ว":"ส่วนต่าง (%)",
-        "สถานะโครงการ/ปัญหาอุปสรรค":"ปัญหาอุปสรรค",
-        "หมายเหตุ /แนวทางแก้ไข":"แนวทางแก้ไข",
+        "สถานะ/ปัญหาอุปสรรค":"ปัญหาอุปสรรค",
+        "หมายเหตุ/แนวทางแก้ไข":"แนวทางแก้ไข",
     }
     df = df.rename(columns=RENAME)
     df["ปีงบประมาณ"] = pd.to_numeric(df["ปีงบประมาณ"], errors="coerce").fillna(0).astype(int)
     for col in ["ระยะทาง (กม.)","เวลาทำงาน (วัน)"]:
-        df[col] = pd.to_numeric(df[col].astype(str).str.split("\n").str[0], errors="coerce")
+        df[col] = pd.to_numeric(df[col], errors="coerce")
     for col in ["โครงการ","ชื่อสายทาง","จังหวัด","ผู้รับจ้าง","หน่วยงานรับผิดชอบ","ปัญหาอุปสรรค","แนวทางแก้ไข"]:
         df[col] = df[col].astype(str).str.strip().replace("nan","")
     MONTH_ORDER = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน",
@@ -449,7 +449,7 @@ def kpi_card(title, value, subtitle=None, border_color="#1A5276", icon="", pulse
         f'<div style="font-size:11px;color:#64748b;font-weight:700;'
         f'text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">{title}</div>'
         f'<div style="font-size:26px;font-weight:800;color:#0f172a;line-height:1.1;'
-        f'letter-spacing:-0.3px">{value}</div>'
+        f'letter-spacing:-0.5px;font-variant-numeric:tabular-nums">{value}</div>'
         f'{sub_html}'
         f'</div>'
     )
@@ -754,28 +754,28 @@ with tab_overview:
       <div style="background:linear-gradient(135deg,#dcfce7 0%,#bbf7d0 100%);
                   border:1px solid #86efac;border-radius:16px;padding:16px;text-align:center;
                   box-shadow:0 4px 16px rgba(22,163,74,0.15),inset 0 1px 0 rgba(255,255,255,0.7)">
-        <div style="font-size:32px;font-weight:800;color:#15803d;line-height:1">{_done_cnt:,}</div>
+        <div style="font-size:32px;font-weight:800;color:#15803d;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-0.5px">{_done_cnt:,}</div>
         <div style="font-size:11px;font-weight:700;color:#166534;text-transform:uppercase;
                     letter-spacing:1px;margin-top:5px">แล้วเสร็จ</div>
       </div>
       <div style="background:linear-gradient(135deg,#dbeafe 0%,#bfdbfe 100%);
                   border:1px solid #93c5fd;border-radius:16px;padding:16px;text-align:center;
                   box-shadow:0 4px 16px rgba(37,99,235,0.15),inset 0 1px 0 rgba(255,255,255,0.7)">
-        <div style="font-size:32px;font-weight:800;color:#1d4ed8;line-height:1">{_on_trk_cnt:,}</div>
+        <div style="font-size:32px;font-weight:800;color:#1d4ed8;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-0.5px">{_on_trk_cnt:,}</div>
         <div style="font-size:11px;font-weight:700;color:#1e40af;text-transform:uppercase;
                     letter-spacing:1px;margin-top:5px">ตามแผน</div>
       </div>
       <div style="background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);
                   border:1px solid #fcd34d;border-radius:16px;padding:16px;text-align:center;
                   box-shadow:0 4px 16px rgba(180,83,9,0.12),inset 0 1px 0 rgba(255,255,255,0.7)">
-        <div style="font-size:32px;font-weight:800;color:#b45309;line-height:1">{_delay_cnt:,}</div>
+        <div style="font-size:32px;font-weight:800;color:#b45309;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-0.5px">{_delay_cnt:,}</div>
         <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;
                     letter-spacing:1px;margin-top:5px">ล่าช้า</div>
       </div>
       <div style="background:linear-gradient(135deg,#fee2e2 0%,#fecaca 100%);
                   border:1px solid #fca5a5;border-radius:16px;padding:16px;text-align:center;
                   box-shadow:0 4px 16px rgba(185,28,28,0.15),inset 0 1px 0 rgba(255,255,255,0.7)">
-        <div style="font-size:32px;font-weight:800;color:#b91c1c;line-height:1">{_crit_cnt:,}</div>
+        <div style="font-size:32px;font-weight:800;color:#b91c1c;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-0.5px">{_crit_cnt:,}</div>
         <div style="font-size:11px;font-weight:700;color:#991b1b;text-transform:uppercase;
                     letter-spacing:1px;margin-top:5px">วิกฤต</div>
       </div>
@@ -998,11 +998,11 @@ with tab_overview:
             hoverlabel=dict(bgcolor="white", font_size=12, font_family="Sarabun"),
         )
         fig_trend.update_xaxes(
-            showgrid=True, gridcolor="#f1f5f9", gridwidth=1,
+            showgrid=True, gridcolor="#e8e3d9", gridwidth=1,
             tickfont=dict(size=11, color="#64748b"),
             title=dict(text="เดือน", font=dict(size=11, color="#64748b"), standoff=8),
         )
-        fig_trend.update_yaxes(showgrid=True, gridcolor="#e2e8f0", gridwidth=1)
+        fig_trend.update_yaxes(showgrid=True, gridcolor="#e8e3d9", gridwidth=1)
         st.plotly_chart(fig_trend, use_container_width=True)
         st.markdown("""
         <div style="background:#fefce8;border-left:4px solid #f59e0b;
@@ -1014,6 +1014,57 @@ with tab_overview:
             ส่งผลให้เส้นกราฟดูเหมือนถดถอย <b>แต่ไม่ได้สะท้อนผลการดำเนินงานที่แย่ลงจริง</b>
         </div>
         """, unsafe_allow_html=True)
+
+    # ── Province Variance Bar Chart ───────────────────────────────────────────────
+    _prov_var = (
+        filtered.groupby("จังหวัด")
+                .agg(avg_var=("ส่วนต่าง (%)","mean"), count=("ชื่อสายทาง","count"))
+                .round(2).reset_index()
+    )
+    _prov_worst = _prov_var[_prov_var["avg_var"] < 0].sort_values("avg_var").head(10)
+
+    if len(_prov_worst) > 0:
+        st.markdown('<p class="section-header">10 จังหวัดที่มีความล่าช้าเฉลี่ยมากที่สุด</p>', unsafe_allow_html=True)
+        _prov_worst = _prov_worst.copy()
+        _prov_worst["bar_color"] = _prov_worst["avg_var"].apply(
+            lambda v: "#dc2626" if v < -10 else "#f59e0b" if v < -5 else "#facc15"
+        )
+        fig_prov_bar = go.Figure(go.Bar(
+            x=_prov_worst["avg_var"],
+            y=_prov_worst["จังหวัด"],
+            orientation="h",
+            marker=dict(color=_prov_worst["bar_color"].tolist(), line=dict(width=0)),
+            text=[f"{v:+.1f}%" for v in _prov_worst["avg_var"]],
+            textposition="outside",
+            textfont=dict(size=11, family="Sarabun", color="#374151"),
+            customdata=_prov_worst["count"],
+            hovertemplate="<b>%{y}</b><br>ส่วนต่างเฉลี่ย: %{x:+.1f}%<br>จำนวนโครงการ: %{customdata}<extra></extra>",
+        ))
+        fig_prov_bar.update_layout(
+            height=max(320, len(_prov_worst) * 40),
+            margin=dict(l=0, r=80, t=44, b=0),
+            title=dict(
+                text="<b>ส่วนต่างเฉลี่ย (แผน – จริง) รายจังหวัด</b>  <span style='font-size:11px;color:#94a3b8'>ค่าติดลบ = ล่าช้า</span>",
+                font=dict(size=13, color="#475569", family="Sarabun"),
+                x=0, xanchor="left", y=0.97,
+            ),
+            xaxis=dict(
+                ticksuffix="%",
+                gridcolor="#e8e3d9", gridwidth=1, zeroline=True,
+                zerolinecolor="#94a3b8", zerolinewidth=1.5,
+                tickfont=dict(size=11, color="#64748b"),
+                title=dict(text="ส่วนต่าง (%)", font=dict(size=11, color="#64748b"), standoff=8),
+            ),
+            yaxis=dict(
+                tickfont=dict(size=12, color="#374151", family="Sarabun"),
+                autorange="reversed",
+            ),
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            font=dict(family="Sarabun"),
+            hoverlabel=dict(bgcolor="white", font_size=12, font_family="Sarabun"),
+        )
+        st.plotly_chart(fig_prov_bar, use_container_width=True)
 
     st.markdown('<div style="height:2px;background:linear-gradient(90deg,rgba(26,82,118,0),rgba(26,82,118,0.25),rgba(26,82,118,0));border-radius:2px;margin:16px 0 8px"></div>', unsafe_allow_html=True)
 
@@ -1988,117 +2039,76 @@ with tab_analysis:
 
     with col_s1:
         st.markdown('<p class="section-header">ภาพรวมพอร์ตโฟลิโอโครงการ (มูลค่าสัญญา)</p>', unsafe_allow_html=True)
-        tree_df = filtered[
-            ["ประเภทโครงการ","จังหวัด","ชื่อสายทาง",
-             "ค่างานตามสัญญา (บาท)","ตามแผน (%)","ส่วนต่าง (%)","จริง (%)"]
+
+        port_df = filtered[
+            filtered["ค่างานตามสัญญา (บาท)"].notna() &
+            (filtered["ค่างานตามสัญญา (บาท)"] > 0)
         ].copy()
-        tree_df = tree_df[
-            tree_df["ค่างานตามสัญญา (บาท)"].notna() &
-            (tree_df["ค่างานตามสัญญา (บาท)"] > 0) &
-            (tree_df["ชื่อสายทาง"].str.strip() != "")
-        ].copy()
-        tree_df["val_mb"] = (tree_df["ค่างานตามสัญญา (บาท)"] / 1e6).round(1)
 
-        # ── 3-level treemap with maxdepth=2: all data kept, only 2 levels rendered ───
-        # maxdepth=2 means the browser draws ~20-30 tiles at a time instead of
-        # hundreds. Clicking a project type reveals provinces+routes for that branch.
+        port_agg = (
+            port_df.groupby("ประเภทโครงการ", sort=False)
+            .agg(
+                val_mb=("ค่างานตามสัญญา (บาท)", lambda x: (x / 1e6).sum()),
+                avg_var=("ส่วนต่าง (%)", "mean"),
+                avg_actual=("จริง (%)", "mean"),
+                avg_plan=("ตามแผน (%)", "mean"),
+                cnt=("ชื่อสายทาง", "count"),
+            )
+            .reset_index()
+            .sort_values("val_mb", ascending=True)
+        )
 
-        # Route nodes (leaves)
-        lf = tree_df.copy()
-        lf["_id"]  = (lf["ประเภทโครงการ"].astype(str) + "||" +
-                      lf["จังหวัด"].astype(str) + "||" +
-                      lf.index.astype(str))
-        lf["_par"] = lf["ประเภทโครงการ"].astype(str) + "||" + lf["จังหวัด"].astype(str)
-        _d    = lf["ส่วนต่าง (%)"].fillna(0)
-        _a    = lf["จริง (%)"].fillna(0)
-        _pl   = lf["ตามแผน (%)"].fillna(0)
-        _mb   = (lf["ค่างานตามสัญญา (บาท)"] / 1e6).round(1)
-        _dr   = _d.round(1)
-        _icon = pd.Series("🟢", index=lf.index)
-        _icon = _icon.where(_d >= 0,   "🟡")
-        _icon = _icon.where(_d >= -5,  "🟠")
-        _icon = _icon.where(_d >= -10, "🔴")
-        _sign = pd.Series("+", index=lf.index).where(_dr >= 0, "")
-        lf["_txt"] = (lf["ชื่อสายทาง"] + "<br>" +
-                      "💰 " + _mb.astype(str) + " ล้าน<br>" +
-                      "📋 " + _pl.round(1).astype(str) + "%" +
-                      "  📊 " + _a.round(1).astype(str) + "%<br>" +
-                      _icon + " " + (_sign + _dr.astype(str)) + "%")
-        lf["_val"] = lf["ค่างานตามสัญญา (บาท)"]
-        lf["_c0"]  = _d;  lf["_c1"] = _a;  lf["_c2"] = _mb;  lf["_c3"] = _pl
-        lf["_lbl"] = lf["ชื่อสายทาง"]
+        def _status_color(v):
+            if v < -10: return "#dc2626"
+            if v < -5:  return "#f59e0b"
+            if v < 0:   return "#facc15"
+            return "#16a34a"
 
-        # Province nodes
-        pv = (lf.groupby(["ประเภทโครงการ","จังหวัด"], sort=False)
-                .agg(_c0=("_c0","mean"), _c1=("_c1","mean"),
-                     _c2=("_c2","sum"),  _c3=("_c3","mean"))
-                .reset_index())
-        pv["_id"]  = pv["ประเภทโครงการ"].astype(str) + "||" + pv["จังหวัด"].astype(str)
-        pv["_par"] = pv["ประเภทโครงการ"].astype(str)
-        pv["_lbl"] = pv["จังหวัด"].astype(str)
-        pv["_txt"] = pv["จังหวัด"].astype(str)   # overview: name only
-        pv["_val"] = 0.0
+        def _status_label(v):
+            if v < -10: return "วิกฤต"
+            if v < -5:  return "ล่าช้า"
+            if v < 0:   return "ล่าช้าเล็กน้อย"
+            return "ตามแผน"
 
-        # Project type nodes
-        pt = (lf.groupby("ประเภทโครงการ", sort=False)
-                .agg(_c0=("_c0","mean"), _c1=("_c1","mean"),
-                     _c2=("_c2","sum"),  _c3=("_c3","mean"))
-                .reset_index())
-        pt["_id"]  = pt["ประเภทโครงการ"].astype(str)
-        pt["_par"] = ""
-        pt["_lbl"] = pt["ประเภทโครงการ"].astype(str)
-        pt["_txt"] = pt["ประเภทโครงการ"].astype(str)
-        pt["_val"] = 0.0
+        port_agg["color"] = port_agg["avg_var"].apply(_status_color)
+        port_agg["status"] = port_agg["avg_var"].apply(_status_label)
 
-        _cols = ["_id","_lbl","_par","_val","_c0","_c1","_c2","_c3","_txt"]
-        nodes = pd.concat([pt[_cols], pv[_cols], lf[_cols]], ignore_index=True)
-
-        fig_tree = go.Figure(go.Treemap(
-            ids          = nodes["_id"].tolist(),
-            labels       = nodes["_lbl"].tolist(),
-            parents      = nodes["_par"].tolist(),
-            values       = nodes["_val"].tolist(),
-            branchvalues = "remainder",
-            maxdepth     = 2,
-            text         = nodes["_txt"].tolist(),
-            textinfo     = "text",
-            customdata   = nodes[["_c0","_c1","_c2","_c3"]].values.tolist(),
+        fig_port = go.Figure()
+        fig_port.add_trace(go.Bar(
+            x=port_agg["val_mb"],
+            y=port_agg["ประเภทโครงการ"],
+            orientation="h",
+            marker_color=port_agg["color"].tolist(),
+            marker_line=dict(width=0),
+            customdata=port_agg[["avg_var","avg_actual","avg_plan","cnt","status"]].values,
             hovertemplate=(
-                "<b>%{label}</b><br>──────────────────<br>"
-                "มูลค่า   : %{customdata[2]:,.1f} ล้านบาท<br>"
-                "แผน      : %{customdata[3]:.1f}%<br>"
-                "จริง     : %{customdata[1]:.1f}%<br>"
-                "ส่วนต่าง : %{customdata[0]:+.1f}%"
+                "<b>%{y}</b><br>"
+                "มูลค่า : %{x:,.1f} ล้านบาท<br>"
+                "โครงการ : %{customdata[3]} โครงการ<br>"
+                "แผน : %{customdata[2]:.1f}%  จริง : %{customdata[1]:.1f}%<br>"
+                "ส่วนต่าง : %{customdata[0]:+.1f}%  (%{customdata[4]})"
                 "<extra></extra>"
             ),
-            marker=dict(
-                colors    = nodes["_c0"].tolist(),
-                colorscale=[
-                    [0.0,  "#dc2626"],
-                    [0.35, "#f59e0b"],
-                    [0.55, "#facc15"],
-                    [1.0,  "#16a34a"],
-                ],
-                cmin=-15, cmax=5,
-                line=dict(width=2, color="white"),
-                colorbar=dict(title="ส่วนต่าง<br>(%)", ticksuffix="%",
-                              thickness=12, len=0.7),
-            ),
-            textfont     = dict(family="Sarabun", size=13),
-            textposition = "middle center",
+            text=port_agg["val_mb"].apply(lambda v: f"{v:,.0f}"),
+            textposition="outside",
+            textfont=dict(size=11, family="Sarabun"),
         ))
-        fig_tree.update_layout(
-            height=700,
-            margin=dict(l=0, r=0, t=48, b=0),
-            title=dict(
-                text="<b>พอร์ตโฟลิโอโครงการ</b>  <span style='font-size:11px;color:#94a3b8'>ขนาด = มูลค่าสัญญา · สี = ส่วนต่าง (แดง=ล่าช้า, เขียว=เร็วกว่าแผน) · คลิกเพื่อเจาะลึก</span>",
-                font=dict(size=13, color="#475569", family="Sarabun"),
-                x=0, xanchor="left", y=0.99,
+        fig_port.update_layout(
+            height=max(300, len(port_agg) * 52 + 80),
+            margin=dict(l=0, r=60, t=12, b=40),
+            xaxis=dict(
+                title="มูลค่าสัญญา (ล้านบาท)",
+                tickfont=dict(size=11, family="Sarabun"),
+                gridcolor="#e2e8f0",
             ),
+            yaxis=dict(tickfont=dict(size=12, family="Sarabun")),
+            plot_bgcolor="white",
+            paper_bgcolor="rgba(0,0,0,0)",
             font=dict(family="Sarabun"),
+            showlegend=False,
         )
-        st.plotly_chart(fig_tree, use_container_width=True)
-        st.caption("ขนาด = มูลค่าสัญญา · สี = ส่วนต่างเฉลี่ย (แดง = ล่าช้า · เขียว = เร็วกว่าแผน)")
+        st.plotly_chart(fig_port, use_container_width=True)
+        st.caption("สีแทนสถานะ: 🔴 วิกฤต (< −10%)  🟡 ล่าช้า (−10%–−5%)  🟨 ล่าช้าเล็กน้อย (−5%–0%)  🟢 ตามแผน (≥ 0%)")
 
     with col_s2:
         st.markdown('<p class="section-header">โครงการที่ล่าช้ามากที่สุด</p>', unsafe_allow_html=True)
