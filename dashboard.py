@@ -2094,7 +2094,7 @@ with tab_analysis:
             textfont=dict(size=11, family="Sarabun"),
         ))
         fig_port.update_layout(
-            height=max(300, len(port_agg) * 52 + 80),
+            height=max(320, len(port_agg) * 52 + 80),
             margin=dict(l=0, r=60, t=12, b=40),
             xaxis=dict(
                 title="มูลค่าสัญญา (ล้านบาท)",
